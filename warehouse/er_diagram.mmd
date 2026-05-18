@@ -1,0 +1,65 @@
+%% Logical data model (ER diagram).
+%% Render with Mermaid Live (https://mermaid.live) or any GitHub-flavored
+%% Markdown viewer that supports Mermaid blocks.
+
+erDiagram
+    DIM_WIKI       ||--o{ DIM_PAGE         : "publishes"
+    DIM_WIKI       ||--o{ FACT_EDIT        : "scopes"
+    DIM_PAGE       ||--o{ FACT_EDIT        : "is_target_of"
+    DIM_EDITOR     ||--o{ FACT_EDIT        : "performs"
+    DIM_TIME       ||--o{ FACT_EDIT        : "occurs_at"
+    DIM_WIKI       ||--o{ FACT_CLICKSTREAM : "scopes"
+    DIM_PAGE       ||--o{ FACT_CLICKSTREAM : "is_target_of"
+    DIM_PAGE       ||--o{ FACT_CLICKSTREAM : "is_referer_of"
+
+    DIM_WIKI {
+        int    wiki_id  PK
+        string wiki_db  UK "enwiki, dewiki, ..."
+        string language
+        string family
+    }
+    DIM_PAGE {
+        int    page_id     PK
+        int    wiki_id     FK
+        string page_title  "unique with wiki_id, namespace"
+        int    namespace
+        ts     first_seen
+    }
+    DIM_EDITOR {
+        int    editor_id    PK
+        string editor_name  "unique with editor_type"
+        string editor_type  "user / anon / bot"
+        string ip_class_v4  "anon /24 only"
+        ts     first_seen
+    }
+    DIM_TIME {
+        bigint time_id      PK "YYYYMMDDHHMI"
+        ts     ts           UK
+        date   date
+        int    hour
+        int    minute
+        int    day_of_week
+        bool   is_weekend
+    }
+    FACT_EDIT {
+        bigint edit_id        PK "wikipedia revision id"
+        bigint time_id        FK
+        int    wiki_id        FK
+        int    page_id        FK
+        int    editor_id      FK
+        ts     ts
+        int    bytes_changed
+        bool   is_minor
+        bool   is_revert
+        bigint parent_edit_id
+        text   comment
+    }
+    FACT_CLICKSTREAM {
+        bigint fc_id            PK
+        int    wiki_id          FK
+        int    target_page_id   FK
+        int    referer_page_id  FK "nullable for external / search"
+        string nav_type         "link / external / other"
+        int    nav_count
+        date   dump_month
+    }

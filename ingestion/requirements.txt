@@ -1,0 +1,5 @@
+confluent-kafka==2.5.*
+sseclient-py==1.8.*
+requests==2.32.*
+pydantic==2.7.*
+python-dotenv==1.0.*

@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: trending_per_minute
+    description: |
+      Top edited pages per 1-minute tumbling window across all wikis.
+      Window function: RANK() OVER (PARTITION BY minute_bucket ORDER BY edit_count DESC).
+    columns:
+      - name: minute_bucket
+        tests: [not_null]
+      - name: page_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_page')
+              field: page_id
+      - name: edit_count
+        tests: [not_null]
+      - name: rank_in_minute
+        tests: [not_null]
+
+  - name: edit_velocity
+    description: |
+      Per-page minute-by-minute edit count vs. the same page 60 minutes earlier.
+      Window function: LAG(edit_count, 60) OVER (PARTITION BY page_id ORDER BY minute_bucket).
+      Positive `accel` flags pages whose edit rate is rising — leading
+      indicator of breaking news.
+    columns:
+      - name: minute_bucket
+        tests: [not_null]
+      - name: page_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_page')
+              field: page_id
+
+  - name: vandalism_candidates
+    description: |
+      Sliding 10-minute windows grouped by (page, anonymous-IP /24 class) where
+      the burst signature matches likely vandalism: ≥3 anon edits, or revert
+      share ≥ 30%.
+    columns:
+      - name: window_start
+        tests: [not_null]
+      - name: window_end
+        tests: [not_null]
+      - name: page_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_page')
+              field: page_id

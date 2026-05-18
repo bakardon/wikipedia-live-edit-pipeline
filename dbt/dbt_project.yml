@@ -1,0 +1,34 @@
+name: 'wiki_pipeline'
+version: '1.0.0'
+config-version: 2
+
+profile: 'wiki_pipeline'
+
+model-paths:    ["models"]
+analysis-paths: ["analyses"]
+test-paths:     ["tests"]
+seed-paths:     ["seeds"]
+macro-paths:    ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  wiki_pipeline:
+    +persist_docs:
+      relation: true
+      columns: true
+
+    staging:
+      +materialized: view
+      +schema: core
+
+    core:
+      +materialized: table
+      +schema: core
+
+    marts:
+      +materialized: table
+      +schema: marts

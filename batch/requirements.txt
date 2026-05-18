@@ -1,0 +1,3 @@
+# pyspark is bundled in the apache/spark:3.5.3 base image; spark-submit puts
+# it on PYTHONPATH at run time, so we don't pip-install it.
+psycopg2-binary==2.9.*

@@ -1,0 +1,14 @@
+line-length = 110
+target-version = "py311"
+
+exclude = [
+  "dbt/target",
+  "dbt/dbt_packages",
+  "dbt/logs",
+  "data",
+  ".venv",
+]
+
+[lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+ignore = ["E501"]  # line length is enforced softly via line-length above

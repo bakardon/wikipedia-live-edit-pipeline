@@ -1,0 +1,7 @@
+-- ============================================================================
+-- Facts (core schema)
+-- Built by dbt from raw.* sources — see dbt/models/core/fact_edit.sql and
+-- dbt/models/core/fact_clickstream.sql.
+-- This file intentionally contains no DDL: dbt is the single owner of fact
+-- tables, so their physical schema lives in the dbt model definitions.
+-- ============================================================================

@@ -1,0 +1,7 @@
+# Host-side tooling: dbt, tests, lint
+dbt-core==1.8.*
+dbt-postgres==1.8.*
+pytest>=8,<9
+ruff>=0.5,<1
+psycopg2-binary>=2.9
+python-dotenv>=1.0

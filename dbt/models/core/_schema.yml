@@ -1,0 +1,107 @@
+version: 2
+
+models:
+  - name: dim_wiki
+    description: "Distinct Wikimedia projects (enwiki, dewiki, dewiktionary, ...)."
+    columns:
+      - name: wiki_id
+        description: "Natural key — same as wiki_db."
+        tests: [unique, not_null]
+      - name: wiki_db
+        tests: [unique, not_null]
+      - name: language
+      - name: family
+        tests:
+          - accepted_values:
+              values: [wikipedia, wiktionary, wikibooks, wikinews, wikiquote,
+                       wikisource, wikiversity, wikivoyage]
+
+  - name: dim_page
+    description: "Distinct pages observed in the edit stream or clickstream."
+    columns:
+      - name: page_id
+        description: "Deterministic 64-bit md5 hash of (wiki_db, namespace, page_title)."
+        tests: [unique, not_null]
+      - name: wiki_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_wiki')
+              field: wiki_id
+      - name: page_title
+        tests: [not_null]
+      - name: namespace
+        tests: [not_null]
+
+  - name: dim_editor
+    description: "Editors: registered users, bots (flagged in stream), and anonymous IPs."
+    columns:
+      - name: editor_id
+        description: "Deterministic 64-bit md5 hash of (editor_name, editor_type)."
+        tests: [unique, not_null]
+      - name: editor_name
+        tests: [not_null]
+      - name: editor_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: [user, anon, bot]
+
+  - name: fact_edit
+    description: "Star-schema fact: one row per Wikipedia edit. Grain = single revision."
+    columns:
+      - name: edit_id
+        tests: [unique, not_null]
+      - name: time_id
+        tests:
+          - not_null
+          - relationships:
+              to: source('core', 'dim_time')
+              field: time_id
+      - name: wiki_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_wiki')
+              field: wiki_id
+      - name: page_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_page')
+              field: page_id
+      - name: editor_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_editor')
+              field: editor_id
+      - name: ts
+        tests: [not_null]
+
+  - name: fact_clickstream
+    description: "Star-schema fact: monthly aggregated page navigations from Clickstream dumps."
+    columns:
+      - name: fc_id
+        tests: [unique, not_null]
+      - name: wiki_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_wiki')
+              field: wiki_id
+      - name: target_page_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_page')
+              field: page_id
+      - name: nav_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: [link, external, other]
+      - name: nav_count
+        tests: [not_null]
+      - name: dump_month
+        tests: [not_null]

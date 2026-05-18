@@ -1,0 +1,46 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Append-only landing tables — direct sinks for streaming + batch jobs."
+    schema: raw
+    tables:
+      - name: stg_edit
+        description: "Wikimedia recentchange events landed by the Spark Structured Streaming job."
+        loaded_at_field: ingested_at
+        freshness:
+          warn_after:  {count: 5,  period: minute}
+          error_after: {count: 30, period: minute}
+        columns:
+          - name: edit_id
+            tests: [not_null]
+          - name: ts
+            tests: [not_null]
+          - name: page_title
+            tests: [not_null]
+          - name: wiki_db
+            tests: [not_null]
+          - name: editor
+            tests: [not_null]
+
+      - name: stg_clickstream
+        description: "Wikipedia Clickstream monthly TSV dumps loaded by the Spark batch job."
+        columns:
+          - name: target
+            tests: [not_null]
+          - name: nav_count
+            tests: [not_null]
+          - name: dump_month
+            tests: [not_null]
+
+  - name: core
+    description: "Pre-seeded reference data managed outside dbt."
+    schema: core
+    tables:
+      - name: dim_time
+        description: "Pre-seeded minute-grain time dimension covering 2026."
+        columns:
+          - name: time_id
+            tests: [unique, not_null]
+          - name: ts
+            tests: [unique, not_null]
