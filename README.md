@@ -1,77 +1,106 @@
-# wiki-edit-pipeline
+# Wikipedia Live Edit Pipeline
 
-Hybrid data engineering pipeline: live Wikipedia edit stream + historical Clickstream batch, with trending-page detection and vandalism flagging.
+**Real-time + batch data platform for analyzing Wikipedia activity.**
 
-University Data Engineering final project (group of 2).
+This project combines Wikimedia's live edit stream with historical Clickstream data to build an end-to-end data platform. It ingests events through Kafka, processes streaming and batch workloads with Apache Spark, models data in PostgreSQL/dbt, and exposes results through a Streamlit dashboard.
+
+## Why this project matters
+
+The system demonstrates the full path from **ingestion → processing → modeling → storage → serving → validation**, rather than a single standalone ETL script.
 
 ## Architecture
 
 ```mermaid
-flowchart TD
-  SSE[Wikimedia EventStreams SSE] --> Producer[ingestion/sse_to_kafka.py]
-  Producer --> Kafka[(Kafka topic: wiki.edits)]
-  Kafka --> Stream[streaming/<br/>Spark Structured Streaming<br/>1-min trending + 10-min vandalism]
-  Stream --> PG[(PostgreSQL 16<br/>star schema)]
-  CS[Wikipedia Clickstream dump<br/>~1.5 GB / month] --> Batch[batch/<br/>Spark batch job]
-  Batch --> PG
-  PG --> Dbt[dbt models + tests]
-  Dbt --> PG
-  PG --> Dash[dashboard/<br/>Streamlit]
-  GH[GitHub Actions<br/>dbt test + pytest] -.-> Dbt
+flowchart LR
+  SSE[Wikimedia EventStreams] --> ING[SSE → Kafka Producer]
+  ING --> K[(Kafka)]
+  K --> SS[Spark Structured Streaming]
+  CS[Wikipedia Clickstream] --> BS[Spark Batch Processing]
+  SS --> PG[(PostgreSQL Star Schema)]
+  BS --> PG
+  PG --> DBT[dbt Models & Tests]
+  DBT --> PG
+  PG --> DASH[Streamlit Dashboard]
+  CI[GitHub Actions] -.-> DBT
+  CI -.-> TEST[pytest]
+```
+
+## What it does
+
+- Consumes live Wikipedia edit events from Wikimedia EventStreams.
+- Publishes events to Kafka for decoupled downstream processing.
+- Runs Spark Structured Streaming for short-window activity analysis.
+- Loads historical Wikipedia Clickstream data with a Spark batch job.
+- Stores curated data in PostgreSQL using a star-schema design.
+- Uses dbt for transformations and data-quality tests.
+- Provides a Streamlit dashboard for live and historical views.
+- Runs automated pytest/dbt checks through GitHub Actions.
+
+## Analytics implemented
+
+- **Trending-page detection:** ranks pages by edit activity in minute-level windows.
+- **Edit-velocity analysis:** uses `LAG()` to compare recent activity with prior periods.
+- **Vandalism flagging:** identifies short bursts of anonymous editing activity followed by reverts.
+
+## Data Engineering Stack
+
+| Layer | Technology |
+|---|---|
+| Ingestion | Wikimedia EventStreams, Python |
+| Messaging | Apache Kafka |
+| Stream processing | Apache Spark Structured Streaming |
+| Batch processing | Apache Spark |
+| Storage | PostgreSQL 16 |
+| Transformation & testing | dbt |
+| Serving | Streamlit |
+| Testing / CI | pytest, GitHub Actions |
+| Local orchestration | Docker Compose, Make |
+
+## Repository Structure
+
+```text
+.
+├── ingestion/         # SSE consumer → Kafka producer
+├── streaming/         # Spark Structured Streaming job
+├── batch/             # Spark batch over Clickstream data
+├── warehouse/         # PostgreSQL DDL + ER diagram
+├── dbt/                # staging and mart models + tests
+├── dashboard/          # Streamlit application
+├── docs/report/         # Project documentation
+├── tests/               # pytest tests
+├── docker-compose.yml
+├── Makefile
+└── .env.example
 ```
 
 ## Quickstart
 
 ```bash
 cp .env.example .env
-make up                    # kafka + postgres + producer + streaming + dashboard
-make download-clickstream  # one-time, ~1.5 GB
-make batch                 # one-shot Spark batch over Clickstream
-make dbt && make dbt-test  # build star-schema marts and validate contracts
-open http://localhost:8501 # live dashboard
+make up
 ```
 
-## Layer mapping (assignment requirement)
+The local stack starts Kafka, PostgreSQL, the ingestion/streaming services, and the dashboard.
 
-| Layer       | Where                                                  |
-|-------------|--------------------------------------------------------|
-| Ingestion   | `ingestion/sse_to_kafka.py` (SSE → Kafka)              |
-| Processing  | `streaming/stream_job.py` + `batch/clickstream_load.py`|
-| Modelling   | `warehouse/ddl/` + `warehouse/er_diagram.mmd`          |
-| Storage     | PostgreSQL 16 (named volume `postgres-data`)           |
-| Serving     | `dashboard/app.py` (Streamlit, live + batch views)     |
+For the historical workload:
 
-## DataOps
-
-- `dbt/` — staging + marts models with `unique` / `not_null` / `freshness` tests.
-- `.github/workflows/ci.yml` — runs `dbt test` + pytest on every push.
-- `docker-compose.yml` — single-command local stack.
-
-## Layout
-
-```
-.
-├── ingestion/         # SSE consumer → Kafka producer
-├── streaming/         # Spark Structured Streaming job
-├── batch/             # Spark batch over Clickstream dump
-├── warehouse/         # Postgres DDL + Mermaid ER diagram
-├── dbt/               # dbt models, tests, profiles
-├── dashboard/         # Streamlit app
-├── docs/report/       # Final report sections (drafted layer-by-layer)
-├── tests/             # pytest tests
-├── docker-compose.yml
-├── Makefile
-└── .env.example
+```bash
+make download-clickstream
+make batch
+make dbt
+make dbt-test
 ```
 
-## Window functions used (assignment requirement)
+Then open the Streamlit dashboard at `http://localhost:8501`.
 
-Implemented in `dbt/models/marts/`:
+> The historical Clickstream download is large, so it is intentionally a separate one-time step rather than part of default startup.
 
-- `RANK() OVER (PARTITION BY date_trunc('minute', ts) ORDER BY edit_count DESC)` — trending pages per minute.
-- `LAG(edit_count, 60) OVER (PARTITION BY page ORDER BY minute)` — edit-velocity acceleration as the breaking-news signal.
-- 10-min sliding window grouped by `(page, editor_ip_class)` — vandalism signature: short bursts from anonymous IPs followed by reverts.
+## Engineering Notes
 
-## Note on the working directory
+Streaming and batch workloads are intentionally separated while converging into the same analytical storage layer. This allows real-time signals and historical context to be analyzed together without coupling ingestion directly to the dashboard.
 
-The path `/Users/abdullah/Desktop/DE Project_bakr/` contains a space. Docker and Make handle this, but quote it (`"$PWD"`) in any shell scripts you add. Renaming to `de-project-bakr` would remove the friction entirely.
+Docker Compose makes the multi-service environment reproducible locally, while GitHub Actions provides a basic quality gate for transformations and tests.
+
+## Academic Context
+
+Originally developed as a university Data Engineering final project. It is retained as a portfolio project because it demonstrates practical work across streaming systems, distributed processing, data modeling, testing, and application serving.
