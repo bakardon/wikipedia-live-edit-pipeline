@@ -1,8 +1,8 @@
 # Import Kafka consumer
-from kafka import KafkaConsumer
-
 # Import JSON library
 import json
+
+from kafka import KafkaConsumer
 
 # Create Kafka consumer
 consumer = KafkaConsumer(

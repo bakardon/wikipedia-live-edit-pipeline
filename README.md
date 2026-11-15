@@ -1,5 +1,7 @@
 # Wikipedia Live Edit Pipeline
 
+[![CI](https://github.com/bakardon/wikipedia-live-edit-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/bakardon/wikipedia-live-edit-pipeline/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 **Real-time + batch data platform for analyzing Wikipedia activity.**
 
 This project combines Wikimedia's live edit stream with historical Clickstream data to build an end-to-end data platform. It ingests events through Kafka, processes streaming and batch workloads with Apache Spark, models data in PostgreSQL/dbt, and exposes results through a Streamlit dashboard.
@@ -104,3 +106,7 @@ Docker Compose makes the multi-service environment reproducible locally, while G
 ## Academic Context
 
 Originally developed as a university Data Engineering final project. It is retained as a portfolio project because it demonstrates practical work across streaming systems, distributed processing, data modeling, testing, and application serving.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

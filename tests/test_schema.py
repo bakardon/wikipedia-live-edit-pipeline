@@ -1,7 +1,7 @@
 """Unit tests for ingestion.schema (Wikimedia event validation)."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from schema import EditEvent, looks_like_ip
 
@@ -50,7 +50,7 @@ def test_from_event_happy_path():
     assert edit.is_anon is False
     assert edit.is_bot is False
     assert edit.bytes_changed == 50
-    assert edit.ts == datetime.fromtimestamp(1715000000, tz=timezone.utc)
+    assert edit.ts == datetime.fromtimestamp(1715000000, tz=UTC)
 
 
 def test_from_event_drops_non_edit_types():

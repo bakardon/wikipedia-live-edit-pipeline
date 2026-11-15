@@ -1,16 +1,15 @@
 # Import Kafka producer library
-from kafka import KafkaProducer
-
 # Used for converting Python dictionary to JSON
 import json
 
 # Used to add delay between messages
 import time
 
+from kafka import KafkaProducer
 
 # Create Kafka producer
 producer = KafkaProducer(
-    
+
     # Kafka server address
     bootstrap_servers='localhost:9094',
 

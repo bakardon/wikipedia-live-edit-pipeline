@@ -13,13 +13,13 @@ import os
 import signal
 import sys
 import time
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 import requests
 from confluent_kafka import Producer
-from sseclient import SSEClient
-
 from schema import EditEvent
+from sseclient import SSEClient
 
 logging.basicConfig(
     level=os.environ.get("LOG_LEVEL", "INFO"),

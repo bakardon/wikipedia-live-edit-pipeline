@@ -10,7 +10,7 @@ Five tabs cover the full assignment scope:
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 import plotly.express as px
@@ -258,7 +258,7 @@ with st.sidebar:
     st.markdown("### About")
     st.caption(
         f"Postgres `{PG_HOST}:{PG_PORT}/{PG_DB}`  \n"
-        f"Refreshed `{datetime.now(timezone.utc).strftime('%H:%M:%S UTC')}`"
+        f"Refreshed `{datetime.now(UTC).strftime('%H:%M:%S UTC')}`"
     )
 
 st_autorefresh(interval=refresh_seconds * 1000, key="autorefresh")

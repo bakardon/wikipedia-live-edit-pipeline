@@ -6,18 +6,18 @@ warehouse actually uses, and drop non-edit events (logs, page moves, etc.).
 from __future__ import annotations
 
 import ipaddress
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 EDIT_TYPES = {"edit", "new"}
 
 
 class EditEvent(BaseModel):
     edit_id: int
-    rev_id: Optional[int] = None
-    parent_id: Optional[int] = None
+    rev_id: int | None = None
+    parent_id: int | None = None
     ts: datetime
     page_title: str
     namespace: int
@@ -26,17 +26,17 @@ class EditEvent(BaseModel):
     is_anon: bool
     is_bot: bool
     is_minor: bool
-    bytes_changed: Optional[int] = None
-    comment: Optional[str] = None
+    bytes_changed: int | None = None
+    comment: str | None = None
 
     @classmethod
-    def from_event(cls, evt: dict[str, Any]) -> Optional["EditEvent"]:
+    def from_event(cls, evt: dict[str, Any]) -> EditEvent | None:
         if evt.get("type") not in EDIT_TYPES:
             return None
         if evt.get("namespace") is None or evt.get("title") is None:
             return None
         try:
-            ts = datetime.fromtimestamp(int(evt["timestamp"]), tz=timezone.utc)
+            ts = datetime.fromtimestamp(int(evt["timestamp"]), tz=UTC)
         except (KeyError, TypeError, ValueError, OSError):
             return None
 

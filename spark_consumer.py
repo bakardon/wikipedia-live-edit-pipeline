@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, expr
-from pyspark.sql.types import StructType, StringType, IntegerType
+from pyspark.sql.functions import col, expr, from_json
+from pyspark.sql.types import IntegerType, StringType, StructType
 
 # Create Spark session
 spark = SparkSession.builder.appName("StudentAverage").getOrCreate()
